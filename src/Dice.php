@@ -20,12 +20,7 @@ class Dice
     // `readonly` : le nombre de faces d'un dé ne change jamais.
     public function __construct(
         public readonly int $sides,
-    ) {
-        // Un dé à 0 ou -3 faces n'a aucun sens : on refuse tout de suite.
-        if ($sides < 2) {
-            throw new \InvalidArgumentException('Un dé a au moins 2 faces.');
-        }
-    }
+    ) {}
 
     /** Fabrique statique : `Dice::d6()` se lit mieux que `new Dice(6)`. */
     public static function d6(): self

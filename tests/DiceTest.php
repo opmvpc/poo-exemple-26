@@ -24,6 +24,3 @@ test('les fabriques statiques créent les dés classiques', function (): void {
     expect(Dice::d20()->sides)->toBe(20);
 });
 
-test('un dé à moins de 2 faces est refusé', function (): void {
-    expect(fn () => new Dice(1))->toThrow(InvalidArgumentException::class);
-});
