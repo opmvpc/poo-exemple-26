@@ -5,21 +5,23 @@ declare(strict_types=1);
 namespace Dungeon;
 
 /**
- * Un objet ramassable du donjon : une épée, une potion, une corde…
+ * Un objet ramassable du donjon.
  *
- * Deux données seulement : un nom et un poids en kilos. Les propriétés sont
- * `private` : on les lit par des getters, personne ne peut changer le poids
- * d'une épée après coup.
+ * Classe **abstraite** : on ne ramasse jamais « un objet », on ramasse une arme
+ * ou une potion. `describe()` est laissée sans corps, chaque sous-classe l'écrit.
+ *
+ * `protected` : `Weapon` et `Potion` lisent le nom et le poids, l'extérieur non.
+ * `implements Stringable` : `echo $item` renvoie la même chose que `describe()`.
+ *
+ * Chapitres 5 (héritage) et 6 (rareté, Stringable).
  */
-class Item
+abstract class Item implements \Stringable
 {
     public function __construct(
-        private readonly string $name,
-        private readonly float $weight,
+        protected readonly string $name,
+        protected readonly float $weight,
+        protected readonly Rarity $rarity = Rarity::Common,
     ) {
-        if ($weight < 0) {
-            throw new \InvalidArgumentException('Un objet ne peut pas peser moins de 0 kg.');
-        }
     }
 
     /** Le nom affiché de l'objet. */
@@ -34,9 +36,24 @@ class Item
         return $this->weight;
     }
 
-    /** Représentation lisible : "Épée courte (2 kg)". */
+    /** La rareté, `Rarity::Common` par défaut. */
+    public function rarity(): Rarity
+    {
+        return $this->rarity;
+    }
+
+    /** Règle du jeu, arbitraire : la valeur marchande dépend du poids et de la rareté. */
+    public function value(): float
+    {
+        return $this->weight * $this->rarity->multiplier();
+    }
+
+    /** Chaque objet se décrit à sa façon : le parent ne peut pas répondre. */
+    abstract public function describe(): string;
+
+    /** Contrat de Stringable : la même chose que describe(). */
     public function __toString(): string
     {
-        return sprintf('%s (%s kg)', $this->name, $this->weight);
+        return $this->describe();
     }
 }

@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use Dungeon\Fighter;
+use Dungeon\HasHealth;
 use Dungeon\Hero;
 use Dungeon\Inventory;
+use Dungeon\Potion;
+use Dungeon\Weapon;
 
 test('un héros naît avec tous ses points de vie', function (): void {
     $hero = new Hero('Arthur');
@@ -11,6 +15,7 @@ test('un héros naît avec tous ses points de vie', function (): void {
     expect($hero->name)->toBe('Arthur');
     expect($hero->maxHp())->toBe(10);
     expect($hero->hp())->toBe(10);
+    expect($hero->strength)->toBe(2);
     expect($hero->isAlive())->toBeTrue();
 });
 
@@ -63,8 +68,46 @@ test('le héros possède un inventaire dès sa création', function (): void {
     expect($hero->inventory()->count())->toBe(0);
 });
 
-test('attaquer renvoie la force du héros', function (): void {
+test('deux héros n\'ont jamais le même sac', function (): void {
+    $arthur = new Hero('Arthur');
+    $morgane = new Hero('Morgane');
+
+    $arthur->inventory()->add(new Weapon('Épée courte', 2.0, 5));
+
+    expect($arthur->inventory()->count())->toBe(1);
+    expect($morgane->inventory()->count())->toBe(0);
+});
+
+test('à mains nues, attaquer renvoie la force du héros', function (): void {
     $hero = new Hero('Arthur', 10, 4);
 
+    expect($hero->weapon())->toBeNull();
     expect($hero->attack())->toBe(4);
+});
+
+test('équiper une arme ajoute ses dégâts', function (): void {
+    $hero = new Hero('Arthur');
+    $sword = new Weapon('Épée courte', 2.0, 5);
+
+    $hero->equip($sword);
+
+    expect($hero->weapon())->toBe($sword);
+    expect($hero->attack())->toBe(7);
+});
+
+test('boire une potion soigne et vide la potion du sac', function (): void {
+    $hero = new Hero('Arthur');
+    $potion = new Potion('Potion de soin', 0.5, 5);
+    $hero->inventory()->add($potion);
+    $hero->takeDamage(8);
+
+    $hero->drink($potion);
+
+    expect($hero->hp())->toBe(7);
+    expect($hero->inventory()->has('Potion de soin'))->toBeFalse();
+});
+
+test('le héros signe le contrat Fighter et utilise le trait HasHealth', function (): void {
+    expect(new Hero('Arthur'))->toBeInstanceOf(Fighter::class);
+    expect(class_uses(Hero::class))->toContain(HasHealth::class);
 });

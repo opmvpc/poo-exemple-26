@@ -7,21 +7,24 @@ namespace Dungeon;
 /**
  * Le personnage joueur.
  *
- * État : un nom (qui ne change jamais), des points de vie, une force.
- * Comportement : encaisser des coups, se soigner, porter un sac.
- * Pas de `setHp()` : on expose des verbes du jeu (`takeDamage`, `heal`),
- * pas des accès bruts aux propriétés. C'est ça, l'encapsulation.
+ * État : un nom (qui ne change jamais), des points de vie, une force, un sac,
+ * parfois une arme. Comportement : encaisser, se soigner, équiper, boire, frapper.
+ * Pas de `setHp()` : on expose les verbes du jeu, pas des accès bruts aux
+ * propriétés. C'est ça, l'encapsulation.
+ *
+ * `use HasHealth;` (chapitre 6) apporte hp, maxHp et les cinq méthodes de santé,
+ * partagées avec `Monster` sans qu'aucun des deux ne soit le parent de l'autre.
+ * `implements Fighter` (chapitre 6) : le contrat commun avec les monstres.
  */
-final class Hero
+final class Hero implements Fighter
 {
-    /** Les points de vie courants. Toujours entre 0 et maxHp. */
-    private int $hp;
-
-    /** Le maximum de points de vie. Lu par maxHp(), jamais écrit de l'extérieur. */
-    private int $maxHp;
+    use HasHealth;
 
     /** Le sac : créé ici, donc il vit et meurt avec le héros (composition). */
     private Inventory $inventory;
+
+    /** L'arme équipée, ou null si le héros se bat à mains nues (agrégation). */
+    private ?Weapon $weapon = null;
 
     public function __construct(
         public readonly string $name,
@@ -33,49 +36,38 @@ final class Hero
         $this->inventory = new Inventory();
     }
 
-    /** Les PV courants. */
-    public function hp(): int
-    {
-        return $this->hp;
-    }
-
-    /** Le maximum de PV. */
-    public function maxHp(): int
-    {
-        return $this->maxHp;
-    }
-
     /** Le sac du héros. */
     public function inventory(): Inventory
     {
         return $this->inventory;
     }
 
-    /** Encaisse des dégâts, sans jamais descendre sous 0 PV. */
-    public function takeDamage(int $amount): void
+    /** Le héros porte une arme. Il n'en est pas une. */
+    public function equip(Weapon $weapon): void
     {
-        $this->hp = max(0, $this->hp - $amount);
+        $this->weapon = $weapon;
     }
 
-    /** Soigne, sans jamais dépasser maxHp. */
-    public function heal(int $amount): void
+    /** L'arme équipée, ou null. */
+    public function weapon(): ?Weapon
     {
-        $this->hp = min($this->maxHp, $this->hp + $amount);
+        return $this->weapon;
     }
 
-    /** Le héros est-il encore debout ? */
-    public function isAlive(): bool
+    /** Boit la potion : elle soigne, puis elle quitte le sac. */
+    public function drink(Potion $potion): void
     {
-        return $this->hp > 0;
+        $this->heal($potion->healing());
+        $this->inventory->remove($potion->name());
     }
 
-    /** Une attaque simple : la force du héros. */
+    /** La force du héros, plus les dégâts de son arme s'il en porte une. */
     public function attack(): int
     {
-        return $this->strength;
+        return $this->strength + ($this->weapon?->damage() ?? 0);
     }
 
-    /** Affichage : "Arthur (8/10 PV)". */
+    /** Affichage : « Arthur (8/10 PV) ». */
     public function __toString(): string
     {
         return sprintf('%s (%d/%d PV)', $this->name, $this->hp, $this->maxHp);

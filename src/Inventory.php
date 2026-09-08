@@ -9,8 +9,13 @@ namespace Dungeon;
  *
  * C'est une **composition** : l'inventaire est créé dans le constructeur du
  * héros et n'a aucun sens sans lui. Si le héros disparaît, son sac aussi.
+ *
+ * `Countable` et `IteratorAggregate` (chapitre 6) branchent l'objet sur la
+ * syntaxe du langage : `count($sac)` et `foreach ($sac as $item)`.
+ *
+ * @implements \IteratorAggregate<int, Item>
  */
-final class Inventory
+final class Inventory implements \Countable, \IteratorAggregate
 {
     /** @var Item[] La liste des objets transportés. */
     private array $items = [];
@@ -27,18 +32,25 @@ final class Inventory
     }
 
     /**
-     * Ajoute un objet si le sac peut encore le porter.
-     * Retourne `false` (et n'ajoute rien) si le poids dépasse la limite.
+     * Ajoute un objet, ou refuse le sac en levant une exception.
+     *
+     * La signature a changé au chapitre 5 : elle renvoyait `bool` aux chapitres
+     * 3 et 4, elle renvoie `void` et lève depuis. Un `false` que personne ne
+     * teste disparaît en silence ; une exception, non.
+     *
+     * @throws InventoryFullException si le poids dépasse la limite du sac
      */
-    public function add(Item $item): bool
+    public function add(Item $item): void
     {
         if ($this->totalWeight() + $item->weight() > $this->maxWeight) {
-            return false;
+            throw new InventoryFullException(sprintf(
+                '"%s" ne rentre pas : le sac ne porte que %s kg.',
+                $item->name(),
+                $this->maxWeight,
+            ));
         }
 
         $this->items[] = $item;
-
-        return true;
     }
 
     /** Y a-t-il un objet portant ce nom dans le sac ? */
@@ -67,7 +79,7 @@ final class Inventory
         }
     }
 
-    /** Le nombre d'objets dans le sac. */
+    /** Contrat de Countable : ce que `count($inventory)` doit renvoyer. */
     public function count(): int
     {
         return count($this->items);
@@ -85,12 +97,12 @@ final class Inventory
     }
 
     /**
-     * Copie de la liste, pour l'affichage.
+     * Contrat de IteratorAggregate : ce que `foreach` doit parcourir.
      *
-     * @return Item[]
+     * @return \Traversable<int, Item>
      */
-    public function items(): array
+    public function getIterator(): \Traversable
     {
-        return $this->items;
+        return new \ArrayIterator($this->items);
     }
 }

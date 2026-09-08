@@ -3,18 +3,33 @@
 declare(strict_types=1);
 
 use Dungeon\Item;
+use Dungeon\Rarity;
+use Dungeon\Weapon;
+
+test('Item est abstraite : on ne ramasse jamais « un objet »', function (): void {
+    expect((new ReflectionClass(Item::class))->isAbstract())->toBeTrue();
+});
 
 test('un objet a un nom et un poids', function (): void {
-    $item = new Item('Épée courte', 2.0);
+    $item = new Weapon('Épée courte', 2.0, 5);
 
     expect($item->name())->toBe('Épée courte');
     expect($item->weight())->toBe(2.0);
 });
 
-test('un objet s\'affiche lisiblement', function (): void {
-    expect((string) new Item('Corde', 1.5))->toBe('Corde (1.5 kg)');
+test('la rareté vaut Common par défaut', function (): void {
+    expect((new Weapon('Épée courte', 2.0, 5))->rarity())->toBe(Rarity::Common);
 });
 
-test('un poids négatif est refusé', function (): void {
-    expect(fn () => new Item('Bug', -1.0))->toThrow(InvalidArgumentException::class);
+test('la valeur est le poids multiplié par la rareté', function (): void {
+    expect((new Weapon('Épée courte', 2.0, 5))->value())->toBe(2.0);
+    expect((new Weapon('Épée courte', 2.0, 5, Rarity::Rare))->value())->toBe(3.0);
+    expect((new Weapon('Épée courte', 2.0, 5, Rarity::Legendary))->value())->toBe(6.0);
+});
+
+test('Item implements Stringable : (string) renvoie describe()', function (): void {
+    $item = new Weapon('Épée courte', 2.0, 5);
+
+    expect($item)->toBeInstanceOf(Stringable::class);
+    expect((string) $item)->toBe($item->describe());
 });

@@ -9,9 +9,18 @@ declare(strict_types=1);
 
 require __DIR__.'/vendor/autoload.php';
 
+use Dungeon\Battle;
 use Dungeon\Dice;
+use Dungeon\Dragon;
+use Dungeon\Dungeon;
+use Dungeon\Goblin;
 use Dungeon\Hero;
+use Dungeon\InventoryFullException;
 use Dungeon\Item;
+use Dungeon\Monster;
+use Dungeon\Potion;
+use Dungeon\Rarity;
+use Dungeon\Weapon;
 
 /** Petit raccourci d'affichage. */
 function say(string $line = ''): void
@@ -19,56 +28,102 @@ function say(string $line = ''): void
     echo $line, PHP_EOL;
 }
 
-$hero = new Hero('Arthur', 12, 3);
+$hero = new Hero('Arthur', 24, 3);
 $d6 = Dice::d6();
+
+// Le donjon fabrique ses salles : composition.
+$dungeon = new Dungeon(['Entrée', 'Salle des gardes', 'Bibliothèque', 'Forge', 'Trésor']);
+
+// Le butin, fabriqué ici puis posé au sol : agrégation.
+/** @var Item[] $loot */
+$loot = [
+    new Weapon('Épée courte', 2.0, 5),
+    new Potion('Potion de soin', 0.5, 8),
+    new Weapon('Bouclier de bois', 4.0, 1),
+    new Weapon('Enclume du forgeron', 50.0, 2),
+    new Weapon('Lame du dragon', 3.0, 12, Rarity::Legendary),
+];
+
+foreach ($dungeon->rooms() as $index => $room) {
+    $room->drop($loot[$index]);
+}
+
+// Un monstre par salle, ou rien du tout.
+/** @var array<int, ?Monster> $monsters */
+$monsters = [null, new Goblin(), null, new Goblin(), new Dragon()];
 
 say('=== LE DONJON ===');
 say("Notre héros : {$hero}");
 say("Son sac peut porter {$hero->inventory()->maxWeight()} kg.");
 say();
 
-// Le butin possible dans les salles visitées.
-$loot = [
-    new Item('Épée courte', 2.0),
-    new Item('Potion de soin', 0.5),
-    new Item('Bouclier de bois', 4.0),
-    new Item('Enclume du forgeron', 50.0),
-];
+foreach ($dungeon->rooms() as $index => $room) {
+    say('--- '.$room->describe().' ---');
 
-foreach ($loot as $number => $item) {
-    say('--- Salle '.($number + 1).' ---');
-    say("Au sol : {$item}");
-
-    if ($hero->inventory()->add($item)) {
-        say("Ramassé. Sac : {$hero->inventory()->count()} objet(s), {$hero->inventory()->totalWeight()} kg.");
-    } else {
-        say('Trop lourd pour le sac : laissé sur place.');
+    // On ramasse ce qui traîne, si le sac le supporte.
+    $item = $room->take();
+    if ($item !== null) {
+        try {
+            $hero->inventory()->add($item);
+            say("Ramassé : {$item} (valeur {$item->value()}, {$item->rarity()->label()})");
+        } catch (InventoryFullException $e) {
+            $room->drop($item);
+            say('Laissé sur place. '.$e->getMessage());
+        }
     }
 
-    // Un gobelin surgit une fois sur deux (dé à 6 faces).
-    $roll = $d6->roll();
-    if ($roll >= 4) {
-        $damage = $d6->roll();
-        $hero->takeDamage($damage);
-        say("Un gobelin surgit (dé {$roll}) et frappe pour {$damage} dégâts → {$hero}");
-    } else {
-        say("Salle calme (dé {$roll}).");
+    // La meilleure arme du sac part au poing.
+    foreach ($hero->inventory() as $carried) {
+        if ($carried instanceof Weapon
+            && $carried->damage() > ($hero->weapon()?->damage() ?? 0)) {
+            $hero->equip($carried);
+            say("Arthur empoigne : {$carried->name()}.");
+        }
     }
 
-    // Si la potion est dans le sac et que ça va mal, on la boit.
-    if ($hero->hp() < $hero->maxHp() / 2 && $hero->inventory()->has('Potion de soin')) {
-        $hero->heal(5);
-        $hero->inventory()->remove('Potion de soin');
-        say("Arthur boit la potion (+5 PV) → {$hero}");
+    $monster = $monsters[$index];
+    if ($monster === null) {
+        say('Salle calme.');
+        say();
+
+        continue;
+    }
+
+    say("Un {$monster->name} surgit ! {$monster}");
+    $winner = (new Battle($hero, $monster, $d6))->fight();
+    say($winner === $hero
+        ? "Arthur l'emporte → {$hero}"
+        : "Arthur tombe face au {$monster->name}…");
+
+    // Une gorgée de potion si ça tourne mal.
+    if ($hero->isAlive() && $hero->hp() < $hero->maxHp() / 2 && $hero->inventory()->has('Potion de soin')) {
+        foreach ($hero->inventory() as $carried) {
+            if ($carried instanceof Potion) {
+                $hero->drink($carried);
+                say("Arthur boit la potion (+{$carried->healing()} PV) → {$hero}");
+
+                break;
+            }
+        }
+    }
+
+    if (! $hero->isAlive()) {
+        break;
     }
 
     say();
 }
 
+say();
 say('=== FIN DE L\'EXPLORATION ===');
 say($hero->isAlive() ? "Arthur ressort vivant : {$hero}" : 'Arthur est tombé au fond du donjon…');
 say('Contenu du sac :');
-foreach ($hero->inventory()->items() as $item) {
-    say("  - {$item}");
+foreach ($hero->inventory() as $carried) {
+    say("  - {$carried}");
 }
-say(sprintf('Total : %d objet(s) pour %.1f kg.', $hero->inventory()->count(), $hero->inventory()->totalWeight()));
+say(sprintf(
+    'Total : %d objet(s) pour %.1f kg, valeur %.2f.',
+    count($hero->inventory()),
+    $hero->inventory()->totalWeight(),
+    array_sum(array_map(static fn (Item $i): float => $i->value(), iterator_to_array($hero->inventory()))),
+));
