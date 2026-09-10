@@ -12,7 +12,7 @@ test('un sac neuf est vide', function (): void {
 
     expect($bag->count())->toBe(0);
     expect($bag->totalWeight())->toBe(0.0);
-    expect($bag->maxWeight())->toBe(20.0);
+    expect($bag->maxWeight)->toBe(20.0);
 });
 
 test('on ajoute un objet et on le retrouve', function (): void {

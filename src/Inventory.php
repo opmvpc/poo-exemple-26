@@ -10,6 +10,9 @@ namespace Dungeon;
  * C'est une **composition** : l'inventaire est créé dans le constructeur du
  * héros et n'a aucun sens sans lui. Si le héros disparaît, son sac aussi.
  *
+ * `maxWeight` est `public readonly` : on le lit (`$bag->maxWeight`), on ne le
+ * change pas. La liste, elle, reste `private` : on passe par `add()` et `remove()`.
+ *
  * `Countable` et `IteratorAggregate` (chapitre 6) branchent l'objet sur la
  * syntaxe du langage : `count($sac)` et `foreach ($sac as $item)`.
  *
@@ -21,14 +24,8 @@ final class Inventory implements \Countable, \IteratorAggregate
     private array $items = [];
 
     public function __construct(
-        private readonly float $maxWeight = 20.0,
+        public readonly float $maxWeight = 20.0,
     ) {
-    }
-
-    /** Le poids maximum transportable. */
-    public function maxWeight(): float
-    {
-        return $this->maxWeight;
     }
 
     /**
@@ -42,10 +39,10 @@ final class Inventory implements \Countable, \IteratorAggregate
      */
     public function add(Item $item): void
     {
-        if ($this->totalWeight() + $item->weight() > $this->maxWeight) {
+        if ($this->totalWeight() + $item->weight > $this->maxWeight) {
             throw new InventoryFullException(sprintf(
                 '"%s" ne rentre pas : le sac ne porte que %s kg.',
-                $item->name(),
+                $item->name,
                 $this->maxWeight,
             ));
         }
@@ -57,7 +54,7 @@ final class Inventory implements \Countable, \IteratorAggregate
     public function has(string $name): bool
     {
         foreach ($this->items as $item) {
-            if ($item->name() === $name) {
+            if ($item->name === $name) {
                 return true;
             }
         }
@@ -69,7 +66,7 @@ final class Inventory implements \Countable, \IteratorAggregate
     public function remove(string $name): void
     {
         foreach ($this->items as $index => $item) {
-            if ($item->name() === $name) {
+            if ($item->name === $name) {
                 unset($this->items[$index]);
                 // On renumérote les clés pour garder un vrai tableau 0,1,2…
                 $this->items = array_values($this->items);
@@ -90,7 +87,7 @@ final class Inventory implements \Countable, \IteratorAggregate
     {
         $total = 0.0;
         foreach ($this->items as $item) {
-            $total += $item->weight();
+            $total += $item->weight;
         }
 
         return $total;

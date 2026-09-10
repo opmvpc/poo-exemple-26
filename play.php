@@ -44,7 +44,7 @@ $loot = [
     new Weapon('Lame du dragon', 3.0, 12, Rarity::Legendary),
 ];
 
-foreach ($dungeon->rooms() as $index => $room) {
+foreach ($dungeon->rooms as $index => $room) {
     $room->drop($loot[$index]);
 }
 
@@ -54,18 +54,18 @@ $monsters = [null, new Goblin(), null, new Goblin(), new Dragon()];
 
 say('=== LE DONJON ===');
 say("Notre héros : {$hero}");
-say("Son sac peut porter {$hero->inventory()->maxWeight()} kg.");
+say("Son sac peut porter {$hero->inventory->maxWeight} kg.");
 say();
 
-foreach ($dungeon->rooms() as $index => $room) {
+foreach ($dungeon->rooms as $index => $room) {
     say('--- '.$room->describe().' ---');
 
     // On ramasse ce qui traîne, si le sac le supporte.
     $item = $room->take();
     if ($item !== null) {
         try {
-            $hero->inventory()->add($item);
-            say("Ramassé : {$item} (valeur {$item->value()}, {$item->rarity()->label()})");
+            $hero->inventory->add($item);
+            say("Ramassé : {$item} (valeur {$item->value()}, {$item->rarity->label()})");
         } catch (InventoryFullException $e) {
             $room->drop($item);
             say('Laissé sur place. '.$e->getMessage());
@@ -73,11 +73,11 @@ foreach ($dungeon->rooms() as $index => $room) {
     }
 
     // La meilleure arme du sac part au poing.
-    foreach ($hero->inventory() as $carried) {
+    foreach ($hero->inventory as $carried) {
         if ($carried instanceof Weapon
-            && $carried->damage() > ($hero->weapon()?->damage() ?? 0)) {
+            && $carried->damage > ($hero->weapon?->damage ?? 0)) {
             $hero->equip($carried);
-            say("Arthur empoigne : {$carried->name()}.");
+            say("Arthur empoigne : {$carried->name}.");
         }
     }
 
@@ -96,11 +96,11 @@ foreach ($dungeon->rooms() as $index => $room) {
         : "Arthur tombe face au {$monster->name}…");
 
     // Une gorgée de potion si ça tourne mal.
-    if ($hero->isAlive() && $hero->hp() < $hero->maxHp() / 2 && $hero->inventory()->has('Potion de soin')) {
-        foreach ($hero->inventory() as $carried) {
+    if ($hero->isAlive() && $hero->hp < $hero->maxHp / 2 && $hero->inventory->has('Potion de soin')) {
+        foreach ($hero->inventory as $carried) {
             if ($carried instanceof Potion) {
                 $hero->drink($carried);
-                say("Arthur boit la potion (+{$carried->healing()} PV) → {$hero}");
+                say("Arthur boit la potion (+{$carried->healing} PV) → {$hero}");
 
                 break;
             }
@@ -118,12 +118,12 @@ say();
 say('=== FIN DE L\'EXPLORATION ===');
 say($hero->isAlive() ? "Arthur ressort vivant : {$hero}" : 'Arthur est tombé au fond du donjon…');
 say('Contenu du sac :');
-foreach ($hero->inventory() as $carried) {
+foreach ($hero->inventory as $carried) {
     say("  - {$carried}");
 }
 say(sprintf(
     'Total : %d objet(s) pour %.1f kg, valeur %.2f.',
-    count($hero->inventory()),
-    $hero->inventory()->totalWeight(),
-    array_sum(array_map(static fn (Item $i): float => $i->value(), iterator_to_array($hero->inventory()))),
+    count($hero->inventory),
+    $hero->inventory->totalWeight(),
+    array_sum(array_map(static fn (Item $i): float => $i->value(), iterator_to_array($hero->inventory))),
 ));

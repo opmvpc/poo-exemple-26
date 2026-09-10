@@ -17,10 +17,15 @@ namespace Dungeon;
 class Dice
 {
     // Promotion de constructeur : la propriété est déclarée dans la signature.
-    // `readonly` : le nombre de faces d'un dé ne change jamais.
+    // `public readonly` : lisible partout, écrite une seule fois, ici. Pas besoin
+    // d'un `sides()` pour la lire. La validation vit dans le corps du constructeur.
     public function __construct(
         public readonly int $sides,
-    ) {}
+    ) {
+        if ($sides < 2) {
+            throw new \InvalidArgumentException("Un dé a au moins 2 faces, $sides reçu.");
+        }
+    }
 
     /** Fabrique statique : `Dice::d6()` se lit mieux que `new Dice(6)`. */
     public static function d6(): self

@@ -11,7 +11,7 @@ test('une potion est un Item', function (): void {
 });
 
 test('une potion garde ses points de soin', function (): void {
-    expect((new Potion('Élixir', 0.5, 12))->healing())->toBe(12);
+    expect((new Potion('Élixir', 0.5, 12))->healing)->toBe(12);
 });
 
 test('describe décrit une potion', function (): void {

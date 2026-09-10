@@ -10,7 +10,9 @@ namespace Dungeon;
  * Classe **abstraite** : on ne ramasse jamais « un objet », on ramasse une arme
  * ou une potion. `describe()` est laissée sans corps, chaque sous-classe l'écrit.
  *
- * `protected` : `Weapon` et `Potion` lisent le nom et le poids, l'extérieur non.
+ * `public readonly` : le nom, le poids et la rareté se lisent partout
+ * (`$item->name`) et ne s'écrivent qu'une fois, ici. Le poids est vérifié dans
+ * le corps du constructeur : un `readonly` n'a pas de hook, il valide à la naissance.
  * `implements Stringable` : `echo $item` renvoie la même chose que `describe()`.
  *
  * Chapitres 5 (héritage) et 6 (rareté, Stringable).
@@ -18,28 +20,13 @@ namespace Dungeon;
 abstract class Item implements \Stringable
 {
     public function __construct(
-        protected readonly string $name,
-        protected readonly float $weight,
-        protected readonly Rarity $rarity = Rarity::Common,
+        public readonly string $name,
+        public readonly float $weight,
+        public readonly Rarity $rarity = Rarity::Common,
     ) {
-    }
-
-    /** Le nom affiché de l'objet. */
-    public function name(): string
-    {
-        return $this->name;
-    }
-
-    /** Le poids en kilos, utilisé par l'inventaire. */
-    public function weight(): float
-    {
-        return $this->weight;
-    }
-
-    /** La rareté, `Rarity::Common` par défaut. */
-    public function rarity(): Rarity
-    {
-        return $this->rarity;
+        if ($weight < 0) {
+            throw new \InvalidArgumentException("Un poids n'est pas négatif, $weight reçu.");
+        }
     }
 
     /** Règle du jeu, arbitraire : la valeur marchande dépend du poids et de la rareté. */

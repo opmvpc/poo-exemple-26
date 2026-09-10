@@ -16,16 +16,10 @@ final class Potion extends Item
     public function __construct(
         string $name,
         float $weight,
-        private readonly int $healing,
+        public readonly int $healing,
         Rarity $rarity = Rarity::Common,
     ) {
         parent::__construct($name, $weight, $rarity);
-    }
-
-    /** Les points de vie rendus par la potion. */
-    public function healing(): int
-    {
-        return $this->healing;
     }
 
     /** « Potion de soin : potion (0.5 kg, +5 PV) ». */

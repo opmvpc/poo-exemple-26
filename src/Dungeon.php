@@ -12,12 +12,15 @@ namespace Dungeon;
  * n'existent pas ailleurs. C'est une **composition**, losange plein :
  * `Dungeon *-- "1..*" Room`.
  *
+ * `rooms` est `public private(set)` : on parcourt la liste (`foreach
+ * ($dungeon->rooms as $room)`), mais personne ne peut la remplacer de l'extérieur.
+ *
  * Chapitre 4.
  */
 final class Dungeon
 {
     /** @var Room[] Les salles, fabriquées ici. */
-    private array $rooms = [];
+    public private(set) array $rooms = [];
 
     /** @param string[] $names */
     public function __construct(array $names)
@@ -31,11 +34,5 @@ final class Dungeon
     public function room(int $index): Room
     {
         return $this->rooms[$index];
-    }
-
-    /** @return Room[] */
-    public function rooms(): array
-    {
-        return $this->rooms;
     }
 }

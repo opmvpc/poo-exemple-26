@@ -15,19 +15,19 @@ test('un monstre naît avec tous ses points de vie', function (): void {
     $goblin = new Goblin();
 
     expect($goblin->name)->toBe('Gobelin');
-    expect($goblin->maxHp())->toBe(5);
-    expect($goblin->hp())->toBe(5);
+    expect($goblin->maxHp)->toBe(5);
+    expect($goblin->hp)->toBe(5);
 });
 
 test('un monstre encaisse sans jamais descendre sous zéro', function (): void {
     $goblin = new Goblin();
 
     $goblin->takeDamage(2);
-    expect($goblin->hp())->toBe(3);
+    expect($goblin->hp)->toBe(3);
     expect($goblin->isAlive())->toBeTrue();
 
     $goblin->takeDamage(999);
-    expect($goblin->hp())->toBe(0);
+    expect($goblin->hp)->toBe(0);
     expect($goblin->isAlive())->toBeFalse();
 });
 

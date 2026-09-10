@@ -13,8 +13,8 @@ test('un héros naît avec tous ses points de vie', function (): void {
     $hero = new Hero('Arthur');
 
     expect($hero->name)->toBe('Arthur');
-    expect($hero->maxHp())->toBe(10);
-    expect($hero->hp())->toBe(10);
+    expect($hero->maxHp)->toBe(10);
+    expect($hero->hp)->toBe(10);
     expect($hero->strength)->toBe(2);
     expect($hero->isAlive())->toBeTrue();
 });
@@ -24,7 +24,7 @@ test('takeDamage retire des points de vie', function (): void {
 
     $hero->takeDamage(3);
 
-    expect($hero->hp())->toBe(7);
+    expect($hero->hp)->toBe(7);
 });
 
 test('les points de vie ne descendent jamais sous zéro', function (): void {
@@ -32,7 +32,7 @@ test('les points de vie ne descendent jamais sous zéro', function (): void {
 
     $hero->takeDamage(999);
 
-    expect($hero->hp())->toBe(0);
+    expect($hero->hp)->toBe(0);
     expect($hero->isAlive())->toBeFalse();
 });
 
@@ -42,7 +42,7 @@ test('heal ne dépasse jamais le maximum', function (): void {
 
     $hero->heal(100);
 
-    expect($hero->hp())->toBe(10);
+    expect($hero->hp)->toBe(10);
 });
 
 test('le héros s\'affiche avec ses points de vie', function (): void {
@@ -61,27 +61,68 @@ test('le nom est readonly : on ne peut pas le réécrire', function (): void {
     })->toThrow(Error::class);
 });
 
+test('un héros a un nom : les espaces ne comptent pas', function (): void {
+    expect(fn () => new Hero('  '))->toThrow(InvalidArgumentException::class, 'Un héros a un nom.');
+    expect(fn () => new Hero(''))->toThrow(InvalidArgumentException::class);
+});
+
+test('maxHp vaut au moins 1', function (): void {
+    expect(fn () => new Hero('Arthur', 0))
+        ->toThrow(InvalidArgumentException::class, 'maxHp doit valoir au moins 1, 0 reçu.');
+    expect(fn () => new Hero('Arthur', -5))->toThrow(InvalidArgumentException::class);
+    expect((new Hero('Arthur', 1))->hp)->toBe(1);
+});
+
+test('les points de vie se lisent partout mais ne s\'écrivent que dans la classe', function (): void {
+    $hero = new Hero('Arthur');
+
+    expect($hero->hp)->toBe(10);
+    expect(function () use ($hero): void {
+        // private(set) : l'écriture depuis l'extérieur est refusée.
+        $hero->hp = 5;
+    })->toThrow(Error::class);
+    expect(function () use ($hero): void {
+        $hero->maxHp = 99;
+    })->toThrow(Error::class);
+});
+
+test('isFullHealth est une propriété calculée', function (): void {
+    $hero = new Hero('Arthur');
+    expect($hero->isFullHealth)->toBeTrue();
+
+    $hero->takeDamage(1);
+    expect($hero->isFullHealth)->toBeFalse();
+
+    $hero->heal(100);
+    expect($hero->isFullHealth)->toBeTrue();
+
+    expect(function () use ($hero): void {
+        // Propriété virtuelle sans `set` : on ne peut pas l'écrire.
+        $hero->isFullHealth = true;
+    })->toThrow(Error::class);
+});
+
 test('le héros possède un inventaire dès sa création', function (): void {
     $hero = new Hero('Arthur');
 
-    expect($hero->inventory())->toBeInstanceOf(Inventory::class);
-    expect($hero->inventory()->count())->toBe(0);
+    expect($hero->inventory)->toBeInstanceOf(Inventory::class);
+    expect($hero->inventory->count())->toBe(0);
 });
 
 test('deux héros n\'ont jamais le même sac', function (): void {
     $arthur = new Hero('Arthur');
     $morgane = new Hero('Morgane');
 
-    $arthur->inventory()->add(new Weapon('Épée courte', 2.0, 5));
+    $arthur->inventory->add(new Weapon('Épée courte', 2.0, 5));
 
-    expect($arthur->inventory()->count())->toBe(1);
-    expect($morgane->inventory()->count())->toBe(0);
+    expect($arthur->inventory->count())->toBe(1);
+    expect($morgane->inventory->count())->toBe(0);
 });
 
 test('à mains nues, attaquer renvoie la force du héros', function (): void {
     $hero = new Hero('Arthur', 10, 4);
 
-    expect($hero->weapon())->toBeNull();
+    expect($hero->weapon)->toBeNull();
     expect($hero->attack())->toBe(4);
 });
 
@@ -91,20 +132,20 @@ test('équiper une arme ajoute ses dégâts', function (): void {
 
     $hero->equip($sword);
 
-    expect($hero->weapon())->toBe($sword);
+    expect($hero->weapon)->toBe($sword);
     expect($hero->attack())->toBe(7);
 });
 
 test('boire une potion soigne et vide la potion du sac', function (): void {
     $hero = new Hero('Arthur');
     $potion = new Potion('Potion de soin', 0.5, 5);
-    $hero->inventory()->add($potion);
+    $hero->inventory->add($potion);
     $hero->takeDamage(8);
 
     $hero->drink($potion);
 
-    expect($hero->hp())->toBe(7);
-    expect($hero->inventory()->has('Potion de soin'))->toBeFalse();
+    expect($hero->hp)->toBe(7);
+    expect($hero->inventory->has('Potion de soin'))->toBeFalse();
 });
 
 test('le héros signe le contrat Fighter et utilise le trait HasHealth', function (): void {

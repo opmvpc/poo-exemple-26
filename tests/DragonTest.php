@@ -13,7 +13,7 @@ test('un dragon s\'appelle Dragon et a 30 PV', function (): void {
     $dragon = new Dragon();
 
     expect($dragon->name)->toBe('Dragon');
-    expect($dragon->maxHp())->toBe(30);
+    expect($dragon->maxHp)->toBe(30);
     expect((string) $dragon)->toBe('Dragon (30/30 PV)');
 });
 

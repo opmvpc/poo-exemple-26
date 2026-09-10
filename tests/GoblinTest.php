@@ -13,7 +13,7 @@ test('un gobelin s\'appelle Gobelin et a 5 PV', function (): void {
     $goblin = new Goblin();
 
     expect($goblin->name)->toBe('Gobelin');
-    expect($goblin->maxHp())->toBe(5);
+    expect($goblin->maxHp)->toBe(5);
 });
 
 test('un gobelin frappe toujours pour 2', function (): void {

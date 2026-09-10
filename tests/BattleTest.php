@@ -25,7 +25,7 @@ test('un héros solide vient à bout d\'un gobelin', function (): void {
 
     expect($winner)->toBe($hero);
     expect($goblin->isAlive())->toBeFalse();
-    expect($hero->hp())->toBe(17);
+    expect($hero->hp)->toBe(17);
 });
 
 test('un héros trop faible perd contre le dragon', function (): void {

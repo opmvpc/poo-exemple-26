@@ -25,12 +25,12 @@ test('les mêmes règles de santé pour le héros et pour le monstre', function 
     $hero->takeDamage(999);
     $goblin->takeDamage(999);
 
-    expect($hero->hp())->toBe(0);
-    expect($goblin->hp())->toBe(0);
+    expect($hero->hp)->toBe(0);
+    expect($goblin->hp)->toBe(0);
 
     $hero->heal(999);
     $goblin->heal(999);
 
-    expect($hero->hp())->toBe(10);
-    expect($goblin->hp())->toBe(5);
+    expect($hero->hp)->toBe(10);
+    expect($goblin->hp)->toBe(5);
 });

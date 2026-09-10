@@ -11,38 +11,37 @@ namespace Dungeon;
  * classe qui écrit `use HasHealth;`. Il ne se dessine pas en UML, et
  * `class_uses()` ne remonte pas aux classes parentes.
  *
+ * `public private(set)` : tout le monde lit `$hero->hp`, seule la classe écrit.
+ * Le `set` hook porte la règle « jamais sous 0, jamais au-dessus de maxHp » :
+ * `takeDamage()` et `heal()` n'ont plus qu'à soustraire et additionner.
+ *
  * Chapitre 6.
  */
 trait HasHealth
 {
-    /** Les points de vie courants, toujours entre 0 et $maxHp. */
-    protected int $hp = 0;
+    /** Le maximum de points de vie : lecture publique, écriture réservée à la classe. */
+    public private(set) int $maxHp = 0;
 
-    /** Le maximum de points de vie. */
-    protected int $maxHp = 0;
-
-    /** Les PV courants. */
-    public function hp(): int
-    {
-        return $this->hp;
+    /** Les points de vie courants. Le hook les borne à chaque écriture. */
+    public private(set) int $hp = 0 {
+        set => max(0, min($this->maxHp, $value));
     }
 
-    /** Le maximum de PV. */
-    public function maxHp(): int
-    {
-        return $this->maxHp;
+    /** Propriété virtuelle : calculée à la lecture, rien n'est stocké. */
+    public bool $isFullHealth {
+        get => $this->hp === $this->maxHp;
     }
 
-    /** Encaisse des dégâts, sans jamais descendre sous 0 PV. */
+    /** Encaisse des dégâts. Le hook empêche de passer sous 0. */
     public function takeDamage(int $amount): void
     {
-        $this->hp = max(0, $this->hp - $amount);
+        $this->hp -= $amount;
     }
 
-    /** Soigne, sans jamais dépasser maxHp. */
+    /** Soigne. Le hook empêche de dépasser maxHp. */
     public function heal(int $amount): void
     {
-        $this->hp = min($this->maxHp, $this->hp + $amount);
+        $this->hp += $amount;
     }
 
     /** Encore debout ? */

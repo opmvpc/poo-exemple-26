@@ -11,12 +11,15 @@ namespace Dungeon;
  * garde un moment, elle le rend. C'est une **agrégation**, losange vide :
  * `Room o-- "0..1" Item`. L'épée existait avant la salle et lui survit.
  *
+ * `loot` est `public private(set)` : on regarde ce qu'il y a au sol
+ * (`$room->loot`), mais seuls `drop()` et `take()` peuvent le changer.
+ *
  * Chapitre 4.
  */
 final class Room
 {
     /** L'objet posé au sol : reçu de l'extérieur, et parfois absent. */
-    private ?Item $loot = null;
+    public private(set) ?Item $loot = null;
 
     public function __construct(
         public readonly string $name,
@@ -27,12 +30,6 @@ final class Room
     public function drop(Item $item): void
     {
         $this->loot = $item;
-    }
-
-    /** L'objet au sol, ou null. */
-    public function loot(): ?Item
-    {
-        return $this->loot;
     }
 
     /** Retire l'objet du sol et le rend. */
@@ -47,6 +44,6 @@ final class Room
     /** « Salle des gardes : Épée courte ». Le `?->` évite le test sur null. */
     public function describe(): string
     {
-        return $this->name.' : '.($this->loot?->name() ?? 'rien au sol');
+        return $this->name.' : '.($this->loot?->name ?? 'rien au sol');
     }
 }
